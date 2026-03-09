@@ -1,0 +1,57 @@
+<div class="lobby-page">
+
+   <div class="tabs" *ngIf="tenant() as t">
+    <button
+      *ngIf="t.features.pickemEnabled"
+      [class.active]="activeTab() === 'lobby'"
+      (click)="activeTab.set('lobby')">
+      LOBBY
+    </button>
+
+    <button
+      *ngIf="t.features.minigamesEnabled"
+      [class.active]="activeTab() === 'my-games'"
+      (click)="activeTab.set('my-games')">
+     MY PICKS
+    </button>
+  </div>
+
+   <div class="filters">
+    <button
+      *ngFor="let g of enabledGames()"
+      [class.active]="activeGame() === g"
+      (click)="selectGame(g)">
+      {{ g }}
+    </button>
+  </div>
+
+   <div class="header" *ngIf="tenant() as t">
+    <h2>PICKEM MATCHES</h2>
+
+
+  </div>
+
+ <div *ngIf="visiblePickems().length; else empty">
+  <div class="cards-row">
+    <app-pickem-vs-card class="pickem-card"
+      *ngFor="let pickem of visiblePickems()"
+      [match]="pickem"
+      (play)="openGame($event)">
+    </app-pickem-vs-card>
+  </div>
+</div>
+
+
+   <ng-template #empty>
+    <app-empty-state></app-empty-state>
+  </ng-template>
+
+</div>
+
+<app-login-required-dialog
+  *ngIf="showLoginDialog()"
+  (closed)="closeLoginDialog()"
+  (loginClick)="openWpLogin()"
+/>
+
+ 

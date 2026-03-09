@@ -1,0 +1,13 @@
+   <div class="dialog-backdrop" (click)="close()"></div>
+
+    <div class="dialog">
+      <h3>You are not logged in</h3>
+      <p>
+        You must log in to play Pick’ems and earn rewards. In order to log-in please allow pop-ups in your browser settings before clicking "Log in".  
+      </p>
+
+      <div class="actions">
+        <button class="secondary" (click)="close()">Cancel</button>
+        <button class="primary" (click)="login()">Log in</button>
+      </div>
+    </div>

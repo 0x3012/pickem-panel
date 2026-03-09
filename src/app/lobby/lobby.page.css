@@ -1,0 +1,79 @@
+.tabs {
+  display: flex;
+  gap: 32px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 12px;
+}
+
+.tabs button {
+  background: none;
+  border: none;
+  padding: 12px 0;
+  font-weight: 600;
+  cursor: pointer;
+  color: #222;
+}
+
+.tabs button.active {
+  color: #e10600;
+  border-bottom: 2px solid #e10600;
+}
+
+.filters {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+  margin-bottom: 24px;
+}
+
+.filters button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+}
+
+.filters button.active {
+  color: #e10600;
+  font-weight: 600;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.header h2 {
+  font-size: 20px;
+}
+
+.actions {
+  font-size: 14px;
+}
+
+.actions a {
+  color: #e10600;
+  text-decoration: none;
+  margin: 0 6px;
+}
+
+.cards-row {
+  display: flex;
+  gap: 20px;
+     flex-wrap: wrap;
+}
+
+.lobby-page
+{
+  padding-left:10px;
+  padding-right: 10px;
+  padding-bottom:10px;
+}
+
+.pickem-card{
+  width: 24%;
+}
+

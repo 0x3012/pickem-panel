@@ -1,0 +1,28 @@
+<div class="vs-card" (click)="startGame()">
+
+  <div class="teams">
+    <div class="team">
+      <img [src]="match.teamA.logo" [alt]="match.teamA.name" loading="lazy" decoding="async" (error)="
+    $event.target.src.includes('.svg')
+      ? ($event.target.src = match.teamA.logo.replace('.svg', '.png'))
+      : ($event.target.src = '/assets/teams/unknow.svg')
+  " /> <span class="team-name">{{ match.teamA.name }}</span>
+    </div>
+
+    <div class="vs">VS</div>
+
+    <div class="team">
+      <img [src]="match.teamB.logo" [alt]="match.teamB.name" loading="lazy" decoding="async" (error)="
+    $event.target.src.includes('.svg')
+      ? ($event.target.src = match.teamB.logo.replace('.svg', '.png'))
+      : ($event.target.src = '/assets/teams/unknow.svg')
+  " /> <span class="team-name">{{ match.teamB.name }}</span>
+    </div>
+  </div>
+
+  <div class="meta">
+    <span class="tournament">{{ match.tournament }}</span>
+    <span class="time">Starts soon</span>
+  </div>
+
+</div>
