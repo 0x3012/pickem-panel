@@ -25,21 +25,40 @@
     </button>
   </div>
 
-   <div class="header" *ngIf="tenant() as t">
-    <h2>PICKEM MATCHES</h2>
+ <div *ngIf="visiblePickems().length; else empty" class="lobby-container">
 
+    <!-- MAIN (2/3) -->
+    <div class="lobby-main">
+
+      <div class="cards-grid">
+        <app-pickem-vs-card
+          class="pickem-card"
+          *ngFor="let pickem of visiblePickems()"
+          [match]="pickem"
+          (play)="openGame($event)">
+        </app-pickem-vs-card>
+      </div>
+
+    </div>
+
+    <!-- SIDEBAR (1/3) -->
+    <div class="lobby-sidebar">
+
+      <div class="sidebar-card">
+        
+        <div class="sidebar-title">
+          Sign in to play
+        </div>
+
+        <button class="sidebar-button">
+          Sign In
+        </button>
+
+      </div>
+
+    </div>
 
   </div>
-
- <div *ngIf="visiblePickems().length; else empty">
-  <div class="cards-row">
-    <app-pickem-vs-card class="pickem-card"
-      *ngFor="let pickem of visiblePickems()"
-      [match]="pickem"
-      (play)="openGame($event)">
-    </app-pickem-vs-card>
-  </div>
-</div>
 
 
    <ng-template #empty>

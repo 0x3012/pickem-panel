@@ -1,28 +1,66 @@
 <div class="vs-card" (click)="startGame()">
 
-  <div class="teams">
-    <div class="team">
-      <img [src]="match.teamA.logo" [alt]="match.teamA.name" loading="lazy" decoding="async" (error)="
-    $event.target.src.includes('.svg')
-      ? ($event.target.src = match.teamA.logo.replace('.svg', '.png'))
-      : ($event.target.src = '/assets/teams/unknow.svg')
-  " /> <span class="team-name">{{ match.teamA.name }}</span>
-    </div>
-
-    <div class="vs">VS</div>
-
-    <div class="team">
-      <img [src]="match.teamB.logo" [alt]="match.teamB.name" loading="lazy" decoding="async" (error)="
-    $event.target.src.includes('.svg')
-      ? ($event.target.src = match.teamB.logo.replace('.svg', '.png'))
-      : ($event.target.src = '/assets/teams/unknow.svg')
-  " /> <span class="team-name">{{ match.teamB.name }}</span>
-    </div>
+  <!-- 1. Fecha -->
+  <div class="vs-card-date">
+    {{
+      match.startsAt
+        ? (match.startsAt * 1 | date:'dd MMM @ HH:mm')
+        : '28 Jan @ 13:00'
+    }}
   </div>
 
-  <div class="meta">
-    <span class="tournament">{{ match.tournament }}</span>
-    <span class="time">Starts soon</span>
+  <!-- 2. Countdown -->
+  <div class="vs-card-countdown" [class.vs-card-countdown--urgent]="isEndingSoon()">
+    Locks in {{ timeLeft }}
   </div>
 
+  <!-- 3. Pregunta -->
+  <div class="vs-card-question">
+    Who will win?
+  </div>
+
+  <!-- 4. Equipos -->
+  <div class="vs-card-teams">
+
+    <!-- Team A -->
+    <div class="vs-card-team">
+      <div class="vs-card-team-logo-wrapper">
+        <img
+          [src]="match.teamA.logo"
+          [alt]="match.teamA.name"
+          loading="lazy"
+          decoding="async"
+          (error)="
+            $event.target.src.includes('.svg')
+              ? ($event.target.src = match.teamA.logo.replace('.svg', '.png'))
+              : ($event.target.src = '/assets/teams/unknow.svg')
+          "
+        />
+      </div>
+      <div class="vs-card-team-name">
+        {{ match.teamA.name }}
+      </div>
+    </div>
+
+    <!-- Team B -->
+    <div class="vs-card-team">
+      <div class="vs-card-team-logo-wrapper">
+        <img
+          [src]="match.teamB.logo"
+          [alt]="match.teamB.name"
+          loading="lazy"
+          decoding="async"
+          (error)="
+            $event.target.src.includes('.svg')
+              ? ($event.target.src = match.teamB.logo.replace('.svg', '.png'))
+              : ($event.target.src = '/assets/teams/unknow.svg')
+          "
+        />
+      </div>
+      <div class="vs-card-team-name">
+        {{ match.teamB.name }}
+      </div>
+    </div>
+
+  </div>
 </div>

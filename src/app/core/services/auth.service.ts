@@ -11,7 +11,7 @@ type MeResponse = {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly ME_URL = `${environment.wpBaseUrl}/wp-json/pickem/v1/me`;
+  private readonly ME_URL = `https://www.hotspawn.com/wp-json/pickem/v1/me`;
  
   private _user = signal<AuthUser | null>(null);
   private _checked = signal(false);
@@ -28,11 +28,15 @@ export class AuthService {
       .get<MeResponse>(this.ME_URL, { withCredentials: true })
       .subscribe({
         next: res => {
+          if (!environment.production) {
+            console.debug('[AuthService] /me response', res);
+          }
+
           const wasLoggedOut = !this._user();
           this._user.set(res.loggedIn ? res.user : null);
           this._checked.set(true);
-          
-           if (res.loggedIn && wasLoggedOut) {
+
+          if (res.loggedIn && wasLoggedOut) {
             this.toastService.show(
               `Welcome back, ${res.user?.name || res.user?.username || 'User'} you are now logged in!`,
               'success',

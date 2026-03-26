@@ -1,7 +1,7 @@
 {
   "/wp-json": {
-    "target": "http://localhost",
-    "secure": false,
+    "target": "https://www.hotspawn.com",
+    "secure": true,
     "changeOrigin": true
   },
   "/api": {
@@ -10,3 +10,4 @@
     "changeOrigin": true
   }
 }
+
