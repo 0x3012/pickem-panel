@@ -5,9 +5,9 @@ import { Component } from '@angular/core';
   selector: 'app-empty-state',
   template: `
     <div class="empty">
-      <img src="/assets/placeholders/empty.svg" />
-      <p><strong>¡Mantente atento!</strong></p>
-      <p>Los partidos se abrirán en breve</p>
+      <img src="/hs-logo-flat.png" style="width:60px" alt="Hotspawn logo" />
+      <p><strong>Check back in a minute!</strong></p>
+      <p>Fresh info is on the way.</p>
     </div>
   `,
   styles: [`
@@ -22,4 +22,4 @@ import { Component } from '@angular/core';
     }
   `]
 })
-export class EmptyStateComponent {}
+export class EmptyStateComponent { }

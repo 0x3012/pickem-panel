@@ -1,9 +1,13 @@
 <div class="game-page">
 
 
-
+<div class="phaser-wrapper">
   <div id="phaser-container"></div>
-
+</div>
+<div class="sidebar">
+    <div class="sidebar-card-ad">
+      AD Block
+    </div>
 
   <app-login-required-dialog *ngIf="showLoginDialog()" (closed)="onLoginDialogClose()"
     (loginClick)="onLoginDialogGoToLogin()" />

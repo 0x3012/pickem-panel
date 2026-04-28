@@ -32,7 +32,7 @@ export class PickOneGameComponent
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-private deviceService = inject(DeviceService);
+  private deviceService = inject(DeviceService);
   private matchesApi = inject(GameMatchesApi);
   private picksApi = inject(MatchPicksApi);
   private auth = inject(AuthService);
@@ -49,11 +49,9 @@ private deviceService = inject(DeviceService);
   authReady = this.auth.ready;
 
   private userPick: PickChoice | null = null;
- 
+
 
   ngAfterViewInit() {
-    this.auth.loadSession();
-
     this.matchId = Number(this.route.snapshot.paramMap.get('id'));
 
     if (!this.matchId) {
@@ -95,13 +93,15 @@ private deviceService = inject(DeviceService);
                   );
                 }
 
-                this.mountPhaser(matchData);
-                this.listenToPick();
-                this.applyInitialPick();
+                this.mountPhaser(matchData).then(() => {
+                  this.listenToGameEvents();
+                  this.applyInitialPick();
+                });
               },
               error: () => {
-                this.mountPhaser(matchData);
-                this.listenToPick();
+                this.mountPhaser(matchData).then(() => {
+                  this.listenToGameEvents();
+                });
               }
             });
         }, 50);
@@ -113,7 +113,7 @@ private deviceService = inject(DeviceService);
   ngOnDestroy() {
     this.phaserGame?.destroy(true);
   }
- 
+
 
   private requireLogin() {
     this.showLoginDialog.set(true);
@@ -157,24 +157,54 @@ private deviceService = inject(DeviceService);
     if (pick === 'B') return Number(matchData.fixture.teamB.id);
     return null;
   }
- 
 
-  private mountPhaser(matchData: any) {
+
+  private async mountPhaser(matchData: any) {
     this.phaserGame?.destroy(true);
+
+    // wait for custom font(s) before Phaser creates text
+    await Promise.all([
+      document.fonts.load('700 20px Termina'), // countdown
+      document.fonts.load('700 14px Termina'), // back button
+      document.fonts.load('400 14px Termina'), // pick confirmed
+      document.fonts.load('400 12px Termina'), // points
+      document.fonts.load('700 16px Termina'), // team labels
+    ]);
+
+    await document.fonts.ready;
+
+    const container = document.getElementById('phaser-container')!;
+    const dpr = window.devicePixelRatio || 1;
 
     this.phaserGame = new Phaser.Game({
       type: Phaser.AUTO,
       parent: 'phaser-container',
-      backgroundColor: '#0e0e0e',
+      backgroundColor: '#ffffff',
+
+      width: container.clientWidth * dpr,
+      height: container.clientHeight * dpr,
+
       scale: {
-        mode: Phaser.Scale.RESIZE,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
+        mode: Phaser.Scale.NONE,
       },
+
+      render: {
+        antialias: true,
+        antialiasGL: true,
+        pixelArt: false,
+        roundPixels: false,
+      },
+
       scene: [new PickOneScene(matchData)],
     });
+
+    const canvas = this.phaserGame.canvas;
+    canvas.style.width = `${container.clientWidth}px`;
+    canvas.style.height = `${container.clientHeight}px`;
   }
 
-  private listenToPick() {
+  private listenToGameEvents() {
+    
     this.phaserGame?.events.on(
       'pickMade',
       (data: {
@@ -183,7 +213,11 @@ private deviceService = inject(DeviceService);
         points: number;
         multiplier: string;
       }) => this.onPick(data)
+ 
     );
+    this.phaserGame?.events.on('returnToLobby', () => {
+      this.router.navigate(['/lobby']);
+    });
   }
 
   private applyInitialPick() {
@@ -201,39 +235,56 @@ private deviceService = inject(DeviceService);
     this.phaserGame.events.once('scene-ready', tryApply);
   }
 
- 
 
-private async onPick(data: {
-  pick: PickChoice;
-  fixtureId: number;
-  points: number;
-  multiplier: string;
-}) {
-  if (!this.authReady()) return;
 
-  const user = this.auth.user();
-  const tenant = this.tenantService.getTenant();
+  private async onPick(data: {
+    pick: PickChoice;
+    fixtureId: number;
+    points: number;
+    multiplier: string;
+  }) {
+    console.log('onPick called with:', data);
 
-  if (!user || !tenant) return;
+    if (!this.authReady()) {
+      console.error('Auth not ready');
+      return;
+    }
 
-  const tenantId = Number(tenant.tenant.id);
+    const user = this.auth.user();
+    const tenant = this.tenantService.getTenant();
 
-  const pickedTeamId = this.mapPickToTeamId(
-    data.pick,
-    this.currentMatchData
-  );
+    if (!user || !tenant) {
+      console.error('No user or tenant');
+      return;
+    }
 
-  const deviceHash = await this.deviceService.getDeviceHash();
+    const tenantId = Number(tenant.tenant.id);
 
-  this.picksApi.createPick({
-    tenantId,
-    userId: user.id,
-    userEmail: user.email,
-    matchId: data.fixtureId,
-    pick: data.pick,
-    pickedTeamId,
-    userLockTime: new Date().toISOString(),
-    deviceHash,  
-  }).subscribe();
-}
+    const pickedTeamId = this.mapPickToTeamId(
+      data.pick,
+      this.currentMatchData
+    );
+
+    console.log('Mapped pickedTeamId:', pickedTeamId);
+
+    const deviceHash = await this.deviceService.getDeviceHash();
+
+    const payload = {
+      tenantId,
+      userId: user.id,
+      userEmail: user.email,
+      matchId: data.fixtureId,
+      pick: data.pick,
+      pickedTeamId,
+      userLockTime: new Date().toISOString(),
+      deviceHash,
+    };
+
+    console.log('Sending pick payload:', payload);
+
+    this.picksApi.createPick(payload).subscribe({
+      next: response => console.log('Pick created successfully:', response),
+      error: err => console.error('Failed to create pick:', err)
+    });
+  }
 }

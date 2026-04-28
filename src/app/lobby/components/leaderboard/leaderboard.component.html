@@ -1,0 +1,38 @@
+<div class="leaderboard-card">
+  <div class="leaderboard-header">
+    <h3 class="leaderboard-title">{{ title }}</h3>
+
+    <button type="button" class="view-link" (click)="onViewLeaderboard()">
+      <span>{{ viewAllLabel }}</span>
+      <span class="arrow">›</span>
+    </button>
+  </div>
+
+  <div class="leaderboard-table">
+    <div class="table-head">
+      <div>Position</div>
+      <div>Player</div>
+      <div class="points-col">Points</div>
+    </div>
+
+    <ng-container *ngIf="!loading && hasEntries(); else stateTpl">
+      <div
+        class="table-row"
+        *ngFor="let row of rows(); trackBy: trackByUserId"
+      >
+        <div class="position">{{ row.rank }}</div>
+        <div class="player" [title]="row.playerName">
+          {{ row.playerName }}
+        </div>
+        <div class="points">{{ row.totalPoints }}</div>
+      </div>
+    </ng-container>
+
+    <ng-template #stateTpl>
+      <div class="state-row" *ngIf="loading">Loading leaderboard...</div>
+      <div class="state-row" *ngIf="!loading && !hasEntries()">
+        No leaderboard data yet.
+      </div>
+    </ng-template>
+  </div>
+</div>

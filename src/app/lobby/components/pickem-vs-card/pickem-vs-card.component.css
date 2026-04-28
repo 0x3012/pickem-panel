@@ -1,9 +1,9 @@
 .vs-card {
   display: flex;
-  padding: 8px 16px 16px 16px;
+  padding: 16px 16px 16px 16px;
   flex-direction: column;
   align-items: start;
-  gap: 8px;
+  gap: 10px;
   flex: 1 0 0;
 
   border-radius: 8px;
@@ -15,10 +15,35 @@
   transition: all 0.25s ease;
 }
 
+.vs-card--won {
+  border-color: #2d8a4f;
+  box-shadow: inset 0 0 0 1px rgba(45, 138, 79, 0.18);
+}
+
+.vs-card--lost {
+  border-color: #c64141;
+  box-shadow: inset 0 0 0 1px rgba(198, 65, 65, 0.16);
+}
+
 .vs-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 10px 25px rgba(0,0,0,0.08);
   border-color: #c9c48f;
+}
+
+.vs-card--won:hover {
+  border-color: #2d8a4f;
+}
+
+.vs-card--lost:hover {
+  border-color: #c64141;
+}
+
+.vs-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
 .vs-card-date {
@@ -28,11 +53,41 @@
   font-weight: 700;
 }
 
+.vs-card-bell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: NONE;
+  
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.vs-card-bell:hover {
+  transform: scale(1.06);
+ 
+}
+
+.vs-card-bell--active {
+ 
+ 
+}
+
+.vs-card-bell--loading {
+  opacity: 0.65;
+  cursor: wait;
+}
+
 .vs-card-countdown {
   color: #545454;
   font-family: Tahoma;
   font-size: 12px;
   font-weight: 400;
+
+      display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .vs-card-countdown--urgent {
@@ -67,12 +122,26 @@
   padding: 8px;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   flex: 1 0 0;
 
   border-radius: 8px;
   border: 1px solid #E7E7E7;
   background: #FFF;
+}
+
+.vs-card-team--picked {
+  border-width: 2px;
+}
+
+.vs-card-team--picked-won {
+  border-color: #2d8a4f;
+  background: #f1fbf4;
+}
+
+.vs-card-team--picked-lost {
+  border-color: #c64141;
+  background: #fff4f4;
 }
 
 .vs-card-team-logo-wrapper {
@@ -103,4 +172,12 @@
   font-family: Tahoma;
   font-size: 16px;
   font-weight: 400;
+}
+
+.vs-card-team-picked {
+  color: #0A0A0A;
+  text-align: center;
+  font-family: Tahoma;
+  font-size: 12px;
+  font-weight: 500;
 }

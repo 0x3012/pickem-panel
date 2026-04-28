@@ -16,7 +16,9 @@ import { AuthService } from '../core/services/auth.service';
 import type { Team } from '../core/models/pick-one-match.model';
 import { MatchPicksApi } from '../core/services/match-picks.service';
 import type { MatchPick } from '../core/models/match-pick.model';
-
+import { LeaderboardComponent, LeaderboardResponse } from './components/leaderboard/leaderboard.component';
+import { LeaderboardService } from '../core/services/leaderboard.service';
+import { NotificationsService } from '../core/services/notifications.service';
 
 type PickemMatch = {
   id: number;
@@ -25,7 +27,12 @@ type PickemMatch = {
   teamA: Team;
   teamB: Team;
   startsAt: string;
+  status?: string | null;
+  lock_time?: string | null;
+  lockTime?: string | null;
 };
+
+type GameFilter = Game | 'ALL';
 
 @Component({
   standalone: true,
@@ -36,6 +43,7 @@ type PickemMatch = {
     PickemVsCardComponent,
     EmptyStateComponent,
     LoginRequiredDialog,
+    LeaderboardComponent,
 
   ],
   templateUrl: './lobby.page.html',
@@ -50,13 +58,19 @@ export class LobbyPage {
   private router = inject(Router);
   private auth = inject(AuthService);
   private picksApi = inject(MatchPicksApi);
+  private leaderboardService = inject(LeaderboardService);
+  private notificationsService = inject(NotificationsService);
+
+  leaderboard = signal<LeaderboardResponse | null>(null);
+  loadingLeaderboard = signal(false);
   wpLoginUrl = environment.wpLoginUrl;
   /* =========================
      AUTH
   ========================= */
 
   user = this.auth.user;
-  isLoggedIn = this.auth.isLoggedIn;
+  isLoggedIn = computed(() => this.auth.isLoggedIn());
+  authReady = computed(() => this.auth.ready());
 
   /* =========================
      TENANT (LOCAL STATE)
@@ -76,8 +90,7 @@ export class LobbyPage {
   pendingPickemId = signal<number | null>(null);
 
   activeTab = signal<'lobby' | 'my-games'>('lobby');
-  activeGame = signal<Game>('CS2');
-
+  activeGame = signal<GameFilter>('ALL');
   loading = signal(false);
   error = signal<string | null>(null);
 
@@ -88,26 +101,25 @@ export class LobbyPage {
   pickems = signal<PickemMatch[]>([]);
   myPicks = signal<MatchPick[]>([]);
   loadingMyPicks = signal(false);
+  subscribedFixtureIds = signal<Set<number>>(new Set());
+  subscriptionPendingIds = signal<Set<number>>(new Set());
 
-  filteredPickems = computed(() =>
-    this.pickems().filter(p => p.game === this.activeGame())
-  );
+  filteredPickems = computed(() => {
+    const game = this.activeGame();
 
+    if (game === 'ALL') {
+      return this.pickems();
+    }
+
+    return this.pickems().filter(p => p.game === game);
+  });
   visiblePickems = computed(() => {
     const game = this.activeGame();
 
-
-    if (this.activeTab() === 'my-games') {
-      const picksByFixture = new Set(
-        this.myPicks().map(p => p.fixtureId)
-      );
-
-      return this.pickems().filter(
-        p => p.game === game && picksByFixture.has(p.id)
-      );
+    if (game === 'ALL') {
+      return this.pickems();
     }
 
-    // TAB: LOBBY
     return this.pickems().filter(p => p.game === game);
   });
 
@@ -131,53 +143,86 @@ export class LobbyPage {
   /* =========================
      SYNC DEFAULT GAME
   ========================= */
+  loadLeaderboard = effect(() => {
+    const tenant = this.tenant();
+    const game = this.activeGame();
+
+    if (!tenant || !game) return;
+
+    const tenantId = Number(tenant.tenant.id);
+
+    if (!Number.isInteger(tenantId)) {
+      this.leaderboard.set(null);
+      return;
+    }
+
+    this.loadingLeaderboard.set(true);
+
+    this.leaderboardService
+      .getLeaderboard({
+        tenantId,
+        sportAlias: game.toLowerCase(),
+        limit: 10,
+        offset: 0,
+      })
+      .subscribe({
+        next: (data) => {
+          this.leaderboard.set(data);
+          this.loadingLeaderboard.set(false);
+        },
+        error: (err) => {
+          console.error('[LobbyPage] Failed to load leaderboard', err);
+          this.leaderboard.set(null);
+          this.loadingLeaderboard.set(false);
+        },
+      });
+  });
 
   syncDefaultGame = effect(() => {
     const tenant = this.tenant();
     if (!tenant) return;
 
-    const enabled = tenant.games.enabled;
-    const next = enabled.includes(tenant.games.defaultGame)
-      ? tenant.games.defaultGame
-      : enabled[0];
-
-    if (next) this.activeGame.set(next);
+    this.activeGame.set('CS2');
   });
-
-
 
   loadFixtures = effect(() => {
     const game = this.activeGame();
-    if (!game) return;
 
     this.loading.set(true);
     this.error.set(null);
 
-    this.fixturesService
-      .getFixtures({
-        sport_alias: game.toLowerCase(),
-        status: 'scheduled'
-      })
-      .subscribe({
-        next: fixtures => {
-          this.pickems.set(
-            fixtures.map(f => this.mapFixtureToPickem(f))
-          );
-          this.loading.set(false);
-        },
-        error: err => {
-          console.error(err);
-          this.pickems.set([]);
-          this.error.set('Failed to load matches');
-          this.loading.set(false);
-        }
-      });
+    const request =
+      game === 'ALL'
+        ? this.fixturesService.getFixtures({
+          status: 'scheduled'
+        })
+        : this.fixturesService.getFixtures({
+          sport_alias: game.toLowerCase(),
+          status: 'scheduled'
+        });
+
+    request.subscribe({
+      next: fixtures => {
+        this.pickems.set(
+          fixtures.map(f => this.mapFixtureToPickem(f))
+        );
+        this.loading.set(false);
+      },
+      error: err => {
+        console.error(err);
+        this.pickems.set([]);
+        this.error.set('Failed to load matches');
+        this.loading.set(false);
+      }
+    });
   });
 
 
 
   loadMyPicks = effect(() => {
     if (this.activeTab() !== 'my-games') return;
+
+    if (!this.authReady()) return;
 
     if (!this.isLoggedIn()) {
       this.showLoginDialog.set(true);
@@ -209,12 +254,44 @@ export class LobbyPage {
       });
   });
 
+  loadMatchSubscriptions = effect(() => {
+    if (!this.authReady()) return;
+
+    if (!this.isLoggedIn()) {
+      this.subscribedFixtureIds.set(new Set());
+      return;
+    }
+
+    const user = this.user();
+    const tenant = this.tenant();
+    const fixtureIds = this.pickems().map(match => String(match.id));
+
+    if (!user || !tenant || !fixtureIds.length) {
+      this.subscribedFixtureIds.set(new Set());
+      return;
+    }
+
+    this.notificationsService
+      .getMatchSubscriptions(String(tenant.tenant.id), String(user.id), fixtureIds)
+      .subscribe({
+        next: ({ fixtureIds: subscribedIds }) => {
+          this.subscribedFixtureIds.set(
+            new Set(subscribedIds.map(id => Number(id)))
+          );
+        },
+        error: err => {
+          console.error('[LobbyPage] Failed to load match subscriptions', err);
+          this.subscribedFixtureIds.set(new Set());
+        },
+      });
+  });
+
 
   /* =========================
      ACTIONS
   ========================= */
 
-  selectGame(game: Game) {
+  selectGame(game: GameFilter) {
     this.activeGame.set(game);
   }
 
@@ -233,6 +310,78 @@ export class LobbyPage {
     this.pendingPickemId.set(null);
   }
 
+  openLeaderboard() {
+    this.router.navigate(['/leaderboard']);
+  }
+
+  isMatchSubscribed(fixtureId: number): boolean {
+    return this.subscribedFixtureIds().has(fixtureId);
+  }
+
+  isSubscriptionPending(fixtureId: number): boolean {
+    return this.subscriptionPendingIds().has(fixtureId);
+  }
+
+  toggleMatchSubscription(fixtureId: number) {
+    if (!this.authReady()) return;
+
+    if (!this.isLoggedIn()) {
+      this.showLoginDialog.set(true);
+      return;
+    }
+
+    const user = this.user();
+    const tenant = this.tenant();
+
+    if (!user || !tenant) return;
+
+    const enabled = !this.isMatchSubscribed(fixtureId);
+
+    this.subscriptionPendingIds.update(ids => {
+      const next = new Set(ids);
+      next.add(fixtureId);
+      return next;
+    });
+
+    this.notificationsService
+      .updateMatchSubscription({
+        tenantId: String(tenant.tenant.id),
+        userId: String(user.id),
+        fixtureId: String(fixtureId),
+        enabled,
+      })
+      .subscribe({
+        next: ({ enabled: isEnabled }) => {
+          this.subscribedFixtureIds.update(ids => {
+            const next = new Set(ids);
+
+            if (isEnabled) {
+              next.add(fixtureId);
+            } else {
+              next.delete(fixtureId);
+            }
+
+            return next;
+          });
+        },
+        error: err => {
+          console.error('[LobbyPage] Failed to update match subscription', err);
+          this.subscriptionPendingIds.update(ids => {
+            const next = new Set(ids);
+            next.delete(fixtureId);
+            return next;
+          });
+        },
+        complete: () => {
+          this.subscriptionPendingIds.update(ids => {
+            const next = new Set(ids);
+            next.delete(fixtureId);
+            return next;
+          });
+        },
+      });
+  }
+
 
   openWpLogin() {
     this.showLoginDialog.set(false);
@@ -247,7 +396,7 @@ export class LobbyPage {
     );
 
     if (!popup) {
-        return;
+      return;
     }
 
     const poll = setInterval(async () => {
@@ -260,7 +409,7 @@ export class LobbyPage {
 
   private async afterLoginPopup() {
     try {
-      await this.auth.refresh();
+      await this.auth.refresh({ announce: 'login' });
     } catch (e) {
       return;
     }
@@ -283,7 +432,46 @@ export class LobbyPage {
   /* =========================
      MAPPERS
   ========================= */
+  closingSoonPickems = computed(() => {
+    const now = Date.now();
+    const next24Hours = now + 24 * 60 * 60 * 1000;
 
+    return this.visiblePickems()
+      .filter(match => {
+        const startMs = this.getMatchStartMs(match);
+        return startMs > now && startMs < next24Hours;
+      })
+      .sort((a, b) => this.getMatchStartMs(a) - this.getMatchStartMs(b));
+  });
+
+  upcomingPickems = computed(() => {
+    const next24Hours = Date.now() + 24 * 60 * 60 * 1000;
+
+    return this.visiblePickems()
+      .filter(match => {
+        const startMs = this.getMatchStartMs(match);
+        return startMs >= next24Hours;
+      })
+      .sort((a, b) => this.getMatchStartMs(a) - this.getMatchStartMs(b));
+  });
+
+  hasDisplayablePickems = computed(() =>
+    this.closingSoonPickems().length > 0 || this.upcomingPickems().length > 0
+  );
+
+  private getMatchStartMs(match: PickemMatch): number {
+  const raw = match.startsAt;
+
+  if (!raw) return 0;
+
+  const asNumber = Number(raw);
+  if (Number.isFinite(asNumber) && asNumber > 0) {
+    return asNumber;
+  }
+
+  const parsed = new Date(raw).getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
+}
   private mapFixtureToPickem(f: Fixture): PickemMatch {
     return {
       id: Number(f.id),
@@ -294,25 +482,30 @@ export class LobbyPage {
       teamA: {
         id: String(f.participants0_id ?? ''),
         name: f.participants0_name ?? 'TBD',
-        logo: this.teamLogo(f.participants0_id)
+        logo: this.teamLogo(f.participants0_id),
+        pickedPercent: f.participants0_picked_percent ?? 0,
       },
 
       teamB: {
         id: String(f.participants1_id ?? ''),
         name: f.participants1_name ?? 'TBD',
-        logo: this.teamLogo(f.participants1_id)
+        logo: this.teamLogo(f.participants1_id),
+        pickedPercent: f.participants1_picked_percent ?? 0,
       },
 
       startsAt:
         f.scheduled_start_time ??
         f.start_time ??
-        new Date().toISOString()
+        new Date().toISOString(),
+
+      status: f.status,
+      lock_time: f.lock_time
     };
   }
 
   private teamLogo(teamId: string | number | null | undefined): string {
     if (!teamId) {
-      return '/assets/teams/unknown.png';
+      return '/hs-logo-flat.png';
     }
     return `${environment.apiBaseUrl}/teams/${teamId}.svg`;
   }

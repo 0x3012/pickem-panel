@@ -1,0 +1,108 @@
+<div class="lobby-page-wrapper">
+    <div class="sidebar-card-ad">
+        [register to play/prize banner size tbd]
+    </div>
+
+    <div class="lobby-page">
+        <div class="lobby-page-container">
+            <div class="notifications-toolbar" *ngIf="isLoggedIn()">
+                <div class="notifications-filters">
+                    <button
+                        type="button"
+                        class="filter-button"
+                        [class.filter-button--active]="activeFilter() === 'all'"
+                        (click)="setFilter('all')"
+                    >
+                        All
+                    </button>
+
+                    <button
+                        type="button"
+                        class="filter-button"
+                        [class.filter-button--active]="activeFilter() === 'unread'"
+                        (click)="setFilter('unread')"
+                    >
+                        Unread
+                    </button>
+                </div>
+
+                <button
+                    type="button"
+                    class="mark-all-button"
+                    *ngIf="notificationsHistory().length && hasUnreadNotifications()"
+                    [disabled]="markingAllRead()"
+                    (click)="markAllAsRead()"
+                >
+                    {{ markingAllRead() ? 'Marking...' : 'Mark all as read' }}
+                </button>
+            </div>
+
+            <div *ngIf="loading()" class="loading">
+                Loading notifications...
+            </div>
+
+            <div *ngIf="error()" class="error">
+                {{ error() }}
+            </div>
+
+            <div *ngIf="!loading() && !error() && notificationsHistory().length; else empty" class="notifications-container">
+                <div class="notifications-list">
+                    <div
+                        class="notification-item"
+                        [class.notification-item--read]="notification.is_read"
+                        *ngFor="let notification of notificationsHistory(); trackBy: trackByNotificationId"
+                    >
+                        <div class="notification-meta">
+                            <div class="notification-type">{{ formatNotificationType(notification.type) }}</div>
+                            <div class="notification-status" [class.notification-status--read]="notification.is_read">
+                                {{ notification.is_read ? 'Read' : 'Unread' }}
+                            </div>
+                        </div>
+
+                        <div class="notification-message">{{ notification.message }}</div>
+
+                        <div class="notification-actions">
+                            <div class="notification-time">{{ notification.created_at | date:'short' }}</div>
+
+                            <button
+                                type="button"
+                                class="notification-action"
+                                *ngIf="!notification.is_read"
+                                [disabled]="isMarkingAsRead(notification.id)"
+                                (click)="markAsRead(notification.id)"
+                            >
+                                {{ isMarkingAsRead(notification.id) ? 'Marking...' : 'Mark as read' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <ng-template #empty>
+                <app-empty-state *ngIf="!loading() && !error()"></app-empty-state>
+            </ng-template>
+        </div>
+
+        <div class="lobby-sidebar">
+            <div class="sidebar-card" *ngIf="!isLoggedIn()">
+                <div class="sidebar-title">
+                    Sign in to view notifications
+                </div>
+
+                <button (click)="openWpLogin()" class="sidebar-button">
+                    Sign In
+                </button>
+            </div>
+
+            <div class="sidebar-card-ad">
+                AD Block
+            </div>
+        </div>
+    </div>
+</div>
+
+<app-login-required-dialog
+    *ngIf="showLoginDialog()"
+    (closed)="closeLoginDialog()"
+    (loginClick)="openWpLogin()"
+></app-login-required-dialog>

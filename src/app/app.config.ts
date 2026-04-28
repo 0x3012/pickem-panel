@@ -24,8 +24,9 @@ export const appConfig: ApplicationConfig = {
         const auth = inject(AuthService);
 
         return () => {
-          auth.loadSession();
+          auth.loadSession({ silent: true });
           auth.startHeartbeat();
+          auth.startSessionSync();
         };
       },
     },

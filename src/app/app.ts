@@ -5,11 +5,12 @@ import { LayoutService } from './core/services/layout.service';
 import { AuthService } from './core/services/auth.service';
 import { ToastService } from './core/services/toast.service';
 import { ToastContainerComponent } from './lobby/components/toast/toast.component';
+import { SiteHeaderComponent } from './lobby/components/header/site-header.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet,ToastContainerComponent],
+  imports: [RouterOutlet,ToastContainerComponent,SiteHeaderComponent],
   templateUrl: './app.html',
   styleUrls: ['./app.css'],
 })
@@ -24,8 +25,6 @@ export class App implements OnInit {
 
 
   ngOnInit(): void {
-     this.auth.loadSession();
-
      this.tenantService.getTenantBySlug('hotspawn').subscribe({
       next: () => {
          this.layout.loadLayout();

@@ -1,76 +1,81 @@
-<div class="lobby-page">
-
-   <div class="tabs" *ngIf="tenant() as t">
-    <button
-      *ngIf="t.features.pickemEnabled"
-      [class.active]="activeTab() === 'lobby'"
-      (click)="activeTab.set('lobby')">
-      LOBBY
-    </button>
-
-    <button
-      *ngIf="t.features.minigamesEnabled"
-      [class.active]="activeTab() === 'my-games'"
-      (click)="activeTab.set('my-games')">
-     MY PICKS
-    </button>
+<div class="lobby-page-wrapper">
+  <div class="sidebar-card-ad">
+    [register to play/prize banner size tbd]
   </div>
 
-   <div class="filters">
-    <button
-      *ngFor="let g of enabledGames()"
-      [class.active]="activeGame() === g"
-      (click)="selectGame(g)">
-      {{ g }}
-    </button>
-  </div>
-
- <div *ngIf="visiblePickems().length; else empty" class="lobby-container">
-
-    <!-- MAIN (2/3) -->
-    <div class="lobby-main">
-
-      <div class="cards-grid">
-        <app-pickem-vs-card
-          class="pickem-card"
-          *ngFor="let pickem of visiblePickems()"
-          [match]="pickem"
-          (play)="openGame($event)">
-        </app-pickem-vs-card>
+  <div class="lobby-page">
+    <div class="lobby-page-container">
+      <div class="filters">
+        <button *ngFor="let g of enabledGames()" [class.active]="activeGame() === g" (click)="selectGame(g)">
+          {{ g }}
+        </button>
       </div>
 
+      <div *ngIf="hasDisplayablePickems(); else empty" class="lobby-container">
+        <div class="lobby-main">
+    
+          <section class="pickem-section" *ngIf="closingSoonPickems().length">
+            <h2 class="section-title">Closing Soon</h2>
+           <div class="sidebar-card-ad">
+              [register to play/prize banner size tbd]
+            </div>
+       
+            <div class="cards-grid">
+              <app-pickem-vs-card class="pickem-card" *ngFor="let pickem of closingSoonPickems()" [match]="pickem"
+                [notificationsEnabled]="isMatchSubscribed(pickem.id)"
+                [notificationsLoading]="isSubscriptionPending(pickem.id)" (play)="openGame($event)"
+                (toggleNotifications)="toggleMatchSubscription($event)">
+              </app-pickem-vs-card>
+            </div>
+          </section>
+
+          <section class="pickem-section" *ngIf="upcomingPickems().length">
+            <h2 class="section-title">Upcoming</h2>
+           <div class="sidebar-card-ad">
+              [register to play/prize banner size tbd]
+            </div>
+            <div class="cards-grid">
+              <app-pickem-vs-card class="pickem-card" *ngFor="let pickem of upcomingPickems()" [match]="pickem"
+                [notificationsEnabled]="isMatchSubscribed(pickem.id)"
+                [notificationsLoading]="isSubscriptionPending(pickem.id)" (play)="openGame($event)"
+                (toggleNotifications)="toggleMatchSubscription($event)">
+              </app-pickem-vs-card>
+            </div>
+          </section>
+        </div>
+
+        <app-leaderboard class="leaderboard-mobile" [data]="leaderboard()" [loading]="loadingLeaderboard()"
+          [maxRows]="10" [title]="'Leaderboard'" [viewAllLabel]="'View Leaderboard'"
+          (viewLeaderboard)="openLeaderboard()">
+        </app-leaderboard>
+      </div>
+
+      <ng-template #empty>
+        <app-empty-state></app-empty-state>
+      </ng-template>
     </div>
 
-    <!-- SIDEBAR (1/3) -->
     <div class="lobby-sidebar">
-
-      <div class="sidebar-card">
-        
+      <div class="sidebar-card" *ngIf="!isLoggedIn()">
         <div class="sidebar-title">
           Sign in to play
         </div>
 
-        <button class="sidebar-button">
+        <button (click)="openWpLogin()" class="sidebar-button">
           Sign In
         </button>
-
       </div>
 
+      <div class="sidebar-card-ad">
+        AD Block
+      </div>
+
+      <app-leaderboard class="leaderboard-desktop" [data]="leaderboard()" [loading]="loadingLeaderboard()"
+        [maxRows]="10" [title]="'Leaderboard'" [viewAllLabel]="'View Leaderboard'"
+        (viewLeaderboard)="openLeaderboard()">
+      </app-leaderboard>
     </div>
-
   </div>
-
-
-   <ng-template #empty>
-    <app-empty-state></app-empty-state>
-  </ng-template>
-
 </div>
 
-<app-login-required-dialog
-  *ngIf="showLoginDialog()"
-  (closed)="closeLoginDialog()"
-  (loginClick)="openWpLogin()"
-/>
-
- 
+<app-login-required-dialog *ngIf="showLoginDialog()" (closed)="closeLoginDialog()" (loginClick)="openWpLogin()" />

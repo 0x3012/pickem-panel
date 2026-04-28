@@ -1,12 +1,35 @@
 .game-page {
-  padding: 24px;
+  padding: 16px 24px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 24px;
+}
+
+.phaser-wrapper {
+  flex: 0 1 820px;
+  display: flex;
+  justify-content: center;
 }
 
 #phaser-container {
   width: 100%;
-  height: 620px;
-  border-radius: 12px;
-  overflow: hidden;
+  max-width: 820px;
+  height: 280px;
+  margin: 0 auto;
+}
+
+.sidebar {
+  flex: 0 0 250px;
+}
+
+.sidebar-card-ad {
+  height: 190px;
+  border-radius: 10px;
+  background: #ffdff1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .back {
@@ -16,4 +39,43 @@
   color: #e10600;
   font-weight: 600;
   cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .game-page {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 16px;
+    gap: 16px;
+  }
+
+
+
+  .phaser-wrapper {
+    flex: none;
+    width: 100%;
+    display: block;
+  }
+
+  #phaser-container {
+    width: 100%;
+    max-width: 100%;
+    height: 220px;
+    min-height: 220px;
+    margin: 0;
+  }
+
+  .sidebar {
+    flex: none;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .sidebar-card {
+    width: 100%;
+    height: auto;
+    min-height: 120px;
+    padding: 16px;
+    box-sizing: border-box;
+  }
 }

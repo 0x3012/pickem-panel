@@ -60,6 +60,13 @@ body {
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: 'Tahoma';
+  src: url('/assets/fonts/tahoma/tahomabd.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 h1, h2, h3, h4,
 .heading,

@@ -1,0 +1,54 @@
+<div class="lobby-page-wrapper">
+    <div class="sidebar-card-ad">
+        [register to play/prize banner size tbd]
+    </div>
+
+    <div class="lobby-page">
+        <div class="lobby-page-container">
+            <div class="filters">
+                <button [class.active]="activeGame() === 'ALL'" (click)="selectGame('ALL')">
+                    ALL
+                </button>
+
+                <button *ngFor="let g of enabledGames()" [class.active]="activeGame() === g" (click)="selectGame(g)">
+                    {{ g }}
+                </button>
+            </div>
+
+            <div *ngIf="visiblePickems().length; else empty" class="lobby-container">
+                <div class="lobby-main">
+                    <div class="cards-grid">
+                        <app-pickem-vs-card class="pickem-card" *ngFor="let pickem of visiblePickems()" [match]="pickem"
+                            [notificationsEnabled]="isMatchSubscribed(pickem.id)"
+                            [notificationsLoading]="isSubscriptionPending(pickem.id)"
+                            (play)="openGame($event)"
+                            (toggleNotifications)="toggleMatchSubscription($event)">
+                        </app-pickem-vs-card>
+                    </div>
+                </div>
+            </div>
+
+            <ng-template #empty>
+                <app-empty-state></app-empty-state>
+            </ng-template>
+        </div>
+
+        <div class="lobby-sidebar">
+            <div class="sidebar-card" *ngIf="!isLoggedIn()">
+                <div class="sidebar-title">
+                    Sign in to view your picks
+                </div>
+
+                <button (click)="openWpLogin()" class="sidebar-button">
+                    Sign In
+                </button>
+            </div>
+
+            <div class="sidebar-card-ad">
+                AD Block
+            </div>
+        </div>
+    </div>
+</div>
+
+<app-login-required-dialog *ngIf="showLoginDialog()" (closed)="closeLoginDialog()" (loginClick)="openWpLogin()" />

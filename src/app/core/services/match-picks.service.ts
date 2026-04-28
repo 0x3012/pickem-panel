@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -17,6 +17,7 @@ export class MatchPicksApi {
   private http = inject(HttpClient);
 
   private readonly API_URL = `${environment.apiBaseUrl}/api/v1/match-picks`;
+  private readonly PICKS_FIXTURES_URL = `${environment.apiBaseUrl}/api/v1/match-picks`;
 
 
   getUserPicks(
@@ -58,6 +59,36 @@ export class MatchPicksApi {
       }
     ).pipe(
       map(row => row ? this.mapApiPick(row) : null)
+    );
+  }
+
+  getUserPickedFixtures(
+    userId: number,
+    filters?: {
+      sport_alias?: string;
+      competition_id?: string;
+    }
+  ): Observable<any[]> {
+    let params = new HttpParams();
+
+    if (filters?.sport_alias) {
+      params = params.set('sport_alias', filters.sport_alias);
+    }
+
+    if (filters?.competition_id) {
+      params = params.set('competition_id', filters.competition_id);
+    }
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${environment.apiKey}`,
+    });
+
+    return this.http.get<any[]>(
+      `${this.PICKS_FIXTURES_URL}/user/${userId}/fixtures`,
+      {
+        params,
+        headers,
+      }
     );
   }
 
